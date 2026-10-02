@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="styles.css">
+<script src="_ds_bundle.js"></script>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;background:#ffffff;color:#111111;font-family:"Figtree",system-ui,sans-serif;font-size:15px;line-height:1.55}
+  a{color:#333333;text-underline-offset:3px}
+  a:hover{color:#111111}
+  :focus{outline:none}
+  :focus-visible{outline:2px solid #111111;outline-offset:2px}
+  @media print{@page{margin:14mm}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}button,[data-noprint]{display:none!important}}
+</style>
+</helmet>
+
+<div style="max-width:980px;margin:0 auto;padding:44px 26.4px 88px;display:flex;flex-direction:column;gap:44px">
+
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:17.6px;flex-wrap:wrap">
+    <div>
+      <div style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#777777;font-weight:700">The whole picture</div>
+      <h1 style="font-family:'Caprasimo',serif;font-weight:400;font-size:44px;line-height:1.05;letter-spacing:-0.015em;margin:0">{{ month }}</h1>
+    </div>
+    <div style="display:flex;align-items:center;gap:8.8px;flex-wrap:wrap">
+      <div data-noprint="" style="display:flex;gap:4.4px;background:#f0f0f0;border-radius:999px;padding:4.4px">
+        <sc-for list="{{ months }}" as="m" hint-placeholder-count="1">
+          <button type="button" onClick="{{ m.pick }}" style="border:0;border-radius:999px;padding:6.6px 15.4px;cursor:pointer;font-size:13px;font-weight:600;background:{{ m.bg }};color:{{ m.color }}">{{ m.label }}</button>
+        </sc-for>
+      </div>
+      <a href="index.html" data-noprint="" style="border:1px solid rgba(17,17,17,0.2);color:#111111;font-size:13px;font-weight:600;padding:7px 15.4px;border-radius:999px;text-decoration:none">← Budget</a>
+    </div>
+  </div>
+
+  <sc-if value="{{ isSample }}" hint-placeholder-val="{{ false }}">
+    <div style="background:#f4f4f4;border-radius:999px;padding:8.8px 17.6px;font-size:13px;color:#555555;width:fit-content">Showing sample numbers. Log charges on the Budget page and this fills in with yours.</div>
+  </sc-if>
+
+  <div style="display:flex;flex-direction:column;gap:17.6px">
+    <div style="display:flex;gap:44px;flex-wrap:wrap;align-items:flex-end">
+      <div>
+        <div style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#777777;font-weight:700">Planned</div>
+        <div style="font-family:'Caprasimo',serif;font-size:34px;line-height:1.1;font-variant-numeric:tabular-nums">{{ plannedF }}</div>
+      </div>
+      <div>
+        <div style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#777777;font-weight:700">Spent</div>
+        <div style="font-family:'Caprasimo',serif;font-size:34px;line-height:1.1;font-variant-numeric:tabular-nums">{{ spentF }}</div>
+      </div>
+      <div>
+        <div style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:{{ leftColor }};font-weight:700">{{ leftLabel }}</div>
+        <div style="font-family:'Caprasimo',serif;font-size:34px;line-height:1.1;font-variant-numeric:tabular-nums;color:{{ leftColor }}">{{ leftF }}</div>
+      </div>
+    </div>
+
+    <div style="position:relative">
+      <div onMouseLeave="{{ clearHover }}" style="display:flex;height:56px;border-radius:999px;overflow:hidden;background:#f0f0f0;gap:2px">
+        <sc-for list="{{ strip }}" as="s" hint-placeholder-count="10">
+          <div onMouseEnter="{{ s.enter }}" onClick="{{ s.pick }}" style="flex:{{ s.flex }} 0 0;min-width:2px;background:{{ s.bg }};opacity:{{ s.opacity }};cursor:{{ s.cursor }};transition:opacity 120ms"></div>
+        </sc-for>
+      </div>
+      <sc-if value="{{ hasTip }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;bottom:calc(100% + 11px);left:{{ tip.left }}%;transform:translateX({{ tip.shift }}%);background:#111111;color:#ffffff;border-radius:16px;padding:11px 15.4px;min-width:190px;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,0.18);z-index:2">
+          <div style="display:flex;justify-content:space-between;gap:17.6px;align-items:baseline">
+            <span style="display:flex;align-items:center;gap:8.8px;font-weight:700"><span style="width:10px;height:10px;border-radius:999px;background:{{ tip.dot }};flex:none"></span>{{ tip.name }}</span>
+            <span style="font-weight:700;font-variant-numeric:tabular-nums">{{ tip.totalF }}</span>
+          </div>
+          <div style="font-size:12px;color:#b5b5b5;padding-bottom:6.6px">{{ tip.shareF }}</div>
+          <sc-for list="{{ tip.people }}" as="w" hint-placeholder-count="2">
+            <div style="display:flex;justify-content:space-between;gap:17.6px;font-size:13px;padding:2.2px 0">
+              <span style="color:#dddddd">{{ w.name }}</span>
+              <span style="font-variant-numeric:tabular-nums;font-weight:600;color:{{ w.color }}">{{ w.amountF }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+    <div style="display:flex;justify-content:space-between;gap:8.8px;font-size:13px;color:#555555;flex-wrap:wrap">
+      <span>Every charge this month, biggest category first, as a share of {{ stripBaseLabel }}. Hover to see who spent what, click to see the charges.</span>
+      <span style="font-variant-numeric:tabular-nums;font-weight:600;color:#111111">{{ stripPctF }}</span>
+    </div>
+  </div>
+
+  <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;gap:13.2px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:17.6px;flex-wrap:wrap">
+        <div style="display:flex;align-items:baseline;gap:13.2px;flex-wrap:wrap">
+          <span style="width:18px;height:18px;border-radius:999px;background:{{ sel.dot }};flex:none;align-self:center"></span>
+          <h2 style="font-family:'Caprasimo',serif;font-weight:400;font-size:30px;margin:0">{{ sel.name }}</h2>
+          <span style="font-size:14px;color:#555555;font-variant-numeric:tabular-nums">{{ sel.countF }} · {{ sel.totalF }}</span>
+        </div>
+        <button type="button" onClick="{{ clearSel }}" style="border:0;background:transparent;color:#777777;font-size:13px;padding:7px 11px;border-radius:999px;cursor:pointer" style-hover="color:#333333;background:#ededed">Close</button>
+      </div>
+      <div style="background:#f4f4f4;border-radius:28px;padding:8.8px 17.6px">
+        <sc-for list="{{ sel.txns }}" as="t" hint-placeholder-count="4">
+          <div style="display:grid;grid-template-columns:64px minmax(0,1fr) auto 110px;gap:17.6px;align-items:center;padding:11px 8.8px;border-bottom:1px solid rgba(17,17,17,0.08)">
+            <span style="font-size:13px;color:#777777;font-variant-numeric:tabular-nums">{{ t.dateF }}</span>
+            <span style="font-size:14px;overflow-wrap:anywhere">{{ t.noteF }}</span>
+            <span style="font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px;background:{{ t.tagBg }};color:#333333">{{ t.person }}</span>
+            <span style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums">{{ t.amountF }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  KEY = 'organic-budget-sep2026-b';
+  state = { data: null, view: null };
+
+  componentDidMount() {
+    this.load();
+    this.onStore = e => { if (e.key === this.KEY) this.load(); };
+    window.addEventListener('storage', this.onStore);
+  }
+  componentWillUnmount() { window.removeEventListener('storage', this.onStore); }
+  load() {
+    let d = null;
+    try { d = JSON.parse(localStorage.getItem(this.KEY) || 'null'); } catch (e) {}
+    this.setState({ data: d });
+  }
+
+  sample() {
+    const S = [
+      ['Mortgage','N',2557.64,2557.64],['Maintenance Fee','N',481.15,481.15],['Car (Finance)','N',597.42,896.13],['Insurance','N',212.78,210.59],
+      ['Utilities','N',200,92.75],['Internet Bill','N',75.71,75.71],['Cell Phone','N',57.63,57.63],['Subscriptions','N',55.55,33.92],
+      ['Grocery','N',1000,107.56],['Food','N',200,415.78],['Tims/Mcds','N',100,15.55],['Shopping','N',200,966.11],
+      ['Shopping (Amazon)','N',150,360.89],['Car','N',300,388.55],['Travel (Parking+Presto)','N',73,88.99],['Health','N',0,280.23],
+      ['Medicine','N',250,234.51],['Fun/Getaway','N',150,113.54],['Self Care','N',150,100],['Sports','N',95,0],
+      ['Splitwise/Friends','N',0,89.3],['Family','N',100,141.62],['Gift','N',200,0],['Baby','N',400,372.64],
+      ['RESP','N',200,200],['Donation','N',60,60],['Charity','N',65.42,65.42],['Fee','N',0,1.25],
+      ['OSAP','R',161.66,161.66],['Apple bill','R',38,38],['Gas/Maintenance','R',35,35],['Family','R',0,312.94],
+      ['Medical - External','R',0,100.32],['Charity','R',49,49],['Self Care','R',24,24],['Gift','R',100,19.17],
+      ['Presto/Parking','R',0,39.55],['Food','R',0,12]
+    ];
+    const cats = [], txns = [];
+    S.forEach(([name, person, expected, amt], i) => {
+      const id = 's' + i;
+      cats.push({ id, name, person, expected });
+      if (amt) txns.push({ id: 't' + i, cat: id, amount: amt });
+    });
+    return { month: 'September 2026', cats, txns, income: [] };
+  }
+
+  fmt(n) {
+    const v = Math.round((+n || 0) * 100) / 100;
+    return (v < 0 ? '-$' : '$') + Math.abs(v).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  renderVals() {
+    const d = this.state.data;
+    const hasReal = !!(d && d.cats && d.cats.length && ((d.txns && d.txns.length) || (d.archive && d.archive.length)));
+    const base = hasReal ? d : this.sample();
+    const archive = (hasReal && d.archive) || [];
+    const snap = this.state.view ? archive.find(a => a.month === this.state.view) : null;
+    const src = snap || base;
+    const cats = src.cats || [], txns = src.txns || [], income = src.income || [];
+
+    const spentBy = {};
+    txns.forEach(t => { spentBy[t.cat] = (spentBy[t.cat] || 0) + (+t.amount || 0); });
+    const items = cats.map(c => ({ ...c, exp: +c.expected || 0, spent: Math.round((spentBy[c.id] || 0) * 100) / 100 }))
+      .filter(c => c.exp > 0 || c.spent !== 0);
+
+    const planned = items.reduce((s, c) => s + c.exp, 0);
+    const spent = items.reduce((s, c) => s + c.spent, 0);
+    const inc = income.reduce((s, p) => s + (+p.amount || 0), 0);
+    const ref = inc > 0 ? inc : planned;
+    const left = ref - spent;
+
+    const groups = {};
+    items.forEach(c => {
+      const k = c.name.trim().toLowerCase();
+      const g = groups[k] || (groups[k] = { key: k, name: c.name, spent: 0, ids: {}, N: { spent: 0, exp: 0, has: false }, R: { spent: 0, exp: 0, has: false } });
+      const p = g[c.person === 'R' ? 'R' : 'N'];
+      p.spent += c.spent; p.exp += c.exp; p.has = true; g.spent += c.spent; g.ids[c.id] = c.person === 'R' ? 'Rose' : 'Nauman';
+    });
+    const pos = Object.values(groups).filter(g => g.spent > 0).sort((a, b) => b.spent - a.spent);
+    const stripBase = Math.max(ref, spent) || 1;
+    const names = Object.keys(groups).sort();
+    const colorOf = k => {
+      const i = names.indexOf(k);
+      const h = (i * 137.508 + 20) % 360;
+      const l = [0.62, 0.74, 0.52][i % 3];
+      return 'oklch(' + l + ' 0.14 ' + h.toFixed(1) + ')';
+    };
+    const hov = this.state.hover;
+    const selKey = this.state.sel;
+    let acc = 0;
+    const strip = pos.map((g, i) => {
+      const w = g.spent / stripBase * 100;
+      const mid = acc + w / 2; acc += w;
+      return {
+        flex: (w * 10).toFixed(2),
+        bg: colorOf(g.key),
+        opacity: hov != null ? (hov === i ? 1 : 0.35) : (selKey == null || selKey === g.key ? 1 : 0.35),
+        cursor: 'pointer',
+        enter: () => this.setState({ hover: i }),
+        pick: () => this.setState(s => ({ sel: s.sel === g.key ? null : g.key })),
+        _g: g, _mid: mid
+      };
+    });
+    if (spent < stripBase) {
+      const w = (stripBase - spent) / stripBase * 100;
+      const i = strip.length;
+      strip.push({ flex: (w * 10).toFixed(2), bg: '#f0f0f0', opacity: 1, cursor: 'default', pick: () => {}, enter: () => this.setState({ hover: i }), _left: true, _mid: acc + w / 2, _amt: stripBase - spent });
+    }
+    let sel = null;
+    const sg = selKey != null ? pos.find(g => g.key === selKey) : null;
+    if (sg) {
+      const mon = String(src.month || base.month || '').slice(0, 3);
+      const list = txns.filter(t => sg.ids[t.cat]).slice().sort((a, b) => (+a.date || 0) - (+b.date || 0));
+      sel = {
+        name: sg.name, dot: colorOf(sg.key), totalF: this.fmt(sg.spent),
+        countF: list.length + (list.length === 1 ? ' charge' : ' charges'),
+        txns: list.map(t => ({
+          dateF: t.date ? mon + ' ' + t.date : '\u2014',
+          noteF: t.note || '\u2014',
+          person: sg.ids[t.cat],
+          tagBg: sg.ids[t.cat] === 'Rose' ? '#ffffff' : '#e2e2e2',
+          amountF: this.fmt(t.amount)
+        }))
+      };
+    }
+    let tip = null;
+    const h = hov != null ? strip[hov] : null;
+    if (h) {
+      const shift = h._mid < 15 ? -10 : h._mid > 85 ? -90 : -50;
+      if (h._left) tip = { left: h._mid.toFixed(2), shift, name: 'Not spent yet', totalF: this.fmt(h._amt), shareF: Math.round(h._amt / stripBase * 100) + '% of ' + (inc > 0 ? 'income' : 'the plan'), people: [] };
+      else {
+        const g = h._g;
+        tip = {
+          left: h._mid.toFixed(2), shift, name: g.name, dot: colorOf(g.key), totalF: this.fmt(g.spent),
+          shareF: Math.round(g.spent / (spent || 1) * 100) + '% of all spending',
+          people: [['N', 'Nauman'], ['R', 'Rose']].filter(([k]) => g[k].has).map(([k, nm]) => {
+            const p = g[k], over = p.exp > 0 && p.spent > p.exp;
+            return { name: nm, amountF: this.fmt(p.spent) + (p.exp > 0 ? ' of ' + this.fmt(p.exp) : ''), color: over ? '#ffb4ab' : '#ffffff' };
+          })
+        };
+      }
+    }
+
+    const view = this.state.view;
+    const months = [{ m: null, label: base.month || 'Current' }, ...archive.filter(a => a.month !== base.month).map(a => ({ m: a.month, label: a.month }))]
+      .map(o => ({ label: o.label, bg: view === o.m ? '#111111' : 'transparent', color: view === o.m ? '#ffffff' : '#333333', pick: () => this.setState({ view: o.m, sel: null }) }));
+
+    return {
+      month: src.month || base.month,
+      isSample: !hasReal,
+      months,
+      plannedF: this.fmt(planned), spentF: this.fmt(spent),
+      leftF: this.fmt(Math.abs(left)),
+      leftLabel: left < 0 ? (inc > 0 ? 'Short of income' : 'Over plan') : (inc > 0 ? 'Left of income' : 'Left in plan'),
+      leftColor: left < 0 ? '#b3261e' : '#15803d',
+      strip, tip, hasTip: !!tip, sel, hasSel: !!sel,
+      clearSel: () => this.setState({ sel: null }),
+      clearHover: () => this.setState({ hover: null }),
+      stripBaseLabel: inc > 0 ? 'income' : 'the plan',
+      stripPctF: Math.round(spent / (ref || 1) * 100) + '% used'
+    };
+  }
+}
+</script>
+</body>
+</html>
