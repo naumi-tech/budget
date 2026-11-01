@@ -44,6 +44,7 @@
         <button type="button" onClick="{{ reset }}" style="border:0;background:transparent;color:#777777;font-size:13px;padding:7px 11px;border-radius:999px;cursor:pointer" style-hover="color:#333333;background:#ededed">Clear month</button>
       </sc-if>
       <sc-if value="{{ viewingSaved }}" hint-placeholder-val="{{ false }}">
+        <button type="button" onClick="{{ saveArchived }}" style="border:1px solid #111111;background:#111111;color:#ffffff;font-size:13px;font-weight:600;padding:7px 17.6px;border-radius:999px;cursor:pointer" style-hover="background:#333333">Save changes</button>
         <button type="button" onClick="{{ backToCurrent }}" style="border:1px solid rgba(17,17,17,0.2);background:transparent;color:#111111;font-size:13px;font-weight:600;padding:7px 15.4px;border-radius:999px;cursor:pointer" style-hover="background:#ededed">Back to {{ currentMonth }}</button>
       </sc-if>
     </div>
@@ -412,8 +413,12 @@ class Component extends DCLogic {
     const snap = this.state.view ? archive.find(a => a.month === this.state.view) : null;
     const editable = !snap;
     const put = patch => {
-      if (!snap) return this.commit(patch);
-      this.commit({ archive: archive.map(a => (a.month === snap.month ? { ...a, ...patch } : a)) });
+      if (!snap) {
+        const live = archive.some(a => a.month === this.state.month);
+        return this.commit(live ? { ...patch, archive: archive.map(a => (a.month === this.state.month ? { ...a, ...patch } : a)) } : patch);
+      }
+      const same = snap.month === this.state.month;
+      this.commit({ ...(same ? patch : {}), archive: archive.map(a => (a.month === snap.month ? { ...a, ...patch } : a)) });
     };
     this.put = put; this.srcOf = () => (snap ? archive.find(a => a.month === snap.month) || snap : this.state);
     const src = snap || this.state;
@@ -499,6 +504,13 @@ class Component extends DCLogic {
       editable, locked: !editable, viewingSaved: !editable, currentMonth: this.state.month,
       saveMonth: this.saveMonth, newBudget: this.newBudget,
       backToCurrent: () => this.setState({ view: null, open: {} }),
+      saveArchived: () => {
+        if (!snap) return;
+        const a = archive.find(x => x.month === snap.month) || snap;
+        const patch = snap.month === this.state.month ? { cats: a.cats, txns: a.txns, income: a.income, notes: a.notes || '' } : {};
+        this.setState({ open: {} });
+        this.commit({ ...patch, archive: archive.slice(), view: null });
+      },
       hasArchive: archive.length > 0,
       viewNote: editable
         ? (archive.some(a => a.month === this.state.month) ? 'Archived' : 'Current month, not archived yet')
